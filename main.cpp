@@ -3,7 +3,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WiFiMulti.h>
-#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <Arduino_JSON.h>
 #include <FirebaseESP32.h>
@@ -42,7 +41,7 @@ FirebaseConfig config;
 // Define WiFi object
 WiFiMulti wifiMulti;
 
-// Define HTTP
+// Define HTTP object
 WiFiClient client;
 HTTPClient http;  //--> Declare object of class HTTPClient.
 int httpCode;     //--> Variables for HTTP return code.
@@ -170,35 +169,6 @@ void http_setup() {
   }
 }
 
-void http_database_loop() {
-  Serial.println("[HTTP] BEGIN...");
-  
-  // Process to check server.
-  Serial.println();
-  Serial.println("---------------database.php");
-
-  http.begin(client, "http://170.170.41.7/ESP32_MySQL_Database/database.php");
-  http.addHeader("Content-Type", "application/x-www-form-urlencoded");
-
-  httpCode = http.GET();
-
-  if(httpCode > 0) {
-    Serial.print("[HTTP] GET... code: ");
-    Serial.println(httpCode);
-
-    if(httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-      payload = http.getString();
-      Serial.println(payload);
-    }
-  } else {
-    Serial.print("[HTTP] GET... failed, error: ");
-    Serial.println(http.errorToString(httpCode).c_str());
-  }
-
-  http.end();
-  Serial.println("---------------");
-}
-
 void http_getdata_loop() {
   // Process to get data from database to control devices.
   postData = "id=esp32_data";
@@ -235,16 +205,6 @@ void http_getdata_loop() {
 }
 
 void http_update_loop() {
-  Serial.println();
-  Serial.println("---------------");
-  JSONVar myObject = JSON.parse(payload);
-
-  if (JSON.typeof(myObject) == "undefined") {
-    Serial.println("Parsing input failed!");
-    Serial.println("---------------");
-    // return;
-  }
-
   // The process to send the sensors data to the database.
   postData = "id=esp32_data";
   postData += "&count=" + Time_result(0);
@@ -263,6 +223,7 @@ void http_update_loop() {
 
   Serial.println();
   Serial.println("---------------update.php");
+
   http.begin(client, "http://170.170.41.7/ESP32_MySQL_Database/update.php");
   http.addHeader("Content-Type", "application/x-www-form-urlencoded");
   
@@ -281,7 +242,6 @@ void http_update_loop() {
 void http_loop() {
   // Check WiFi connection status.
   if (wifiMulti.run() == WL_CONNECTED) {
-    http_database_loop();
     http_getdata_loop();
     http_update_loop();
   }
