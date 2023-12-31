@@ -1,0 +1,24 @@
+//----------------------------------------
+CREATE TABLE `esp32_sensors` (
+    `id` varchar(255) NOT NULL,
+    `time` time NOT NULL,
+    `count` int NOT NULL,
+    `output` smallint NOT NULL,
+    `temp` float(10,2) NOT NULL,
+    `accX` float(10,2) NOT NULL,
+    `accY` float(10,2) NOT NULL,
+    `accZ` float(10,2) NOT NULL,
+    `gyroX` float(10,2) NOT NULL,
+    `gyroY` float(10,2) NOT NULL,
+    `gyroZ` float(10,2) NOT NULL,
+    `tempC` float(10,2) NOT NULL,
+    `latitude` float(10,6) NOT NULL,
+    `longitude` float(10,6) NOT NULL,
+    `health` tinyint NOT NULL,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+//---------------------------------------- 
+
+//---------------------------------------- 
+INSERT INTO `esp32_sensors`(`id`,`time`,`count`,`output`,`temp`,`accX`,`accY`,`accZ`,`gyroX`,`gyroY`,`gyroZ`,`tempC`,`latitude`,`longitude`,`health`) VALUES ('esp32_data','00:00:00','0','0','0.00','0.00','0.00','0.00','0.00','0.00','0.00','0.00','0.000000','0.000000','0')
+//---------------------------------------- 
