@@ -18,10 +18,11 @@
 #include "Sensors/MPU6050Sensor.h"            // V
 #include "Sensors/NTC10KSensor.h"             // V
 #include "Modules/ButtonModule.h"             // -
+#include "Modules/LedModule.h"                // -
 #include "Modules/GPSModule.h"                // -
 #include "Modules/SimModule.h"                // -
-#include "Modules/MicroModule.h"              //
-#include "Modules/SoundModule.h"              //
+#include "Modules/MicroModule.h"              // -
+#include "Modules/SoundModule.h"              // -
 #include "Modules/SDModule.h"                 // V
 
 // Insert Firebase API Key
@@ -43,6 +44,7 @@ WiFiMulti wifiMulti;
 WiFiClient client;
 HTTPClient http;  //--> Declare object of class HTTPClient.
 int httpCode;     //--> Variables for HTTP return code.
+int healthStatus = 0;
 
 // Variables for HTTP POST request data.
 String postData = ""; // Variables sent for HTTP POST request data.
@@ -132,8 +134,8 @@ void firebase_loop() {
 }
 
 void check_health() {
-  Serial.println();
-  Serial.println("---------------check_health()");
+  // Serial.println();
+  // Serial.println("---------------check_health");
   JSONVar myObject = JSON.parse(payload);
 
   // JSON.typeof(jsonVar) can be used to get the type of the var
@@ -143,19 +145,26 @@ void check_health() {
     return;
   }
 
-  if (myObject.hasOwnProperty("health")) {
-    Serial.print("myObject[\"health\"] = ");
-    Serial.println(myObject["health"]);
-  }
+  // if (myObject.hasOwnProperty("health")) {
+  //   Serial.print("myObject[\"health\"] = ");
+  //   Serial.println(myObject["health"]);
+  // }
 
-  if(strcmp(myObject["health"], "1") == 0) {
+  String jsonString = JSON.stringify(myObject["health"]);
+  // if (strcmp(jsonString.c_str(), "1") == 0) {}
+
+  if (jsonString == "1") {
     if (Button_result() == 0 && Micro_result() == 0) {
+      healthStatus = 1;
       // Sim_loop();
       Sound_loop();
+      Led_loop();
+    } else {
+      healthStatus = 0;
     }
   }
 
-  Serial.println("---------------");
+  // Serial.println("---------------");
 }
 
 void http_getdata_loop(String host) {
@@ -178,7 +187,7 @@ void http_getdata_loop(String host) {
   // REPLACE_WITH_YOUR_COMPUTER_IP_ADDRESS = there are many ways to see the IP address, you can google it. 
   //                                         But make sure that the IP address used is "IPv4 address".
   // Example : http.begin("http://192.168.0.0/ESP32_MySQL_Database/Test/getdata.php");
-  http.begin(client, host.c_str()); //--> Specify request destination
+  http.begin(client, host); //--> Specify request destination
   http.addHeader("Content-Type", "application/x-www-form-urlencoded");        //--> Specify content-type header
   
   httpCode = http.POST(postData); //--> Send the request
@@ -211,22 +220,26 @@ void http_postdata_loop(String host) {
   postData += "&longitude=" + String(SD_result(11));
   payload = "";
 
-  Serial.println();
-  Serial.println("---------------postdata.php");
+  if (healthStatus == 1) {
+    postData += "&health=" + String("1");
+  }
 
-  http.begin(client, host.c_str()); //--> Specify request destination
+  // Serial.println();
+  // Serial.println("---------------postdata.php");
+
+  http.begin(client, host); //--> Specify request destination
   http.addHeader("Content-Type", "application/x-www-form-urlencoded");       //--> Specify content-type header
   
   httpCode = http.POST(postData); //--> Send the request
   payload = http.getString();     //--> Get the response payload
 
-  Serial.print("httpCode : ");
-  Serial.println(httpCode); //--> Print HTTP return code
-  Serial.print("payload : ");
-  Serial.println(payload);  //--> Print request response payload
+  // Serial.print("httpCode : ");
+  // Serial.println(httpCode); //--> Print HTTP return code
+  // Serial.print("payload : ");
+  // Serial.println(payload);  //--> Print request response payload
   
   http.end();  //--> Close connection
-  Serial.println("---------------");
+  // Serial.println("---------------");
 }
 
 void http_loop() {
@@ -254,6 +267,8 @@ void setup() {
     delay(1);
   Button_setup();
     delay(1);
+  Led_setup();
+    delay(1);
   GPS_setup();
     delay(1);
   // Sim_setup();
@@ -277,13 +292,15 @@ void loop() {
     delay(1);
   NTC10K_loop();
     delay(1);
-  // Button_loop();
+  Button_loop();
+    delay(1);
+  // Led_loop();
     delay(1);
   GPS_loop();
     delay(1);
   // Sim_loop();
     delay(1);
-  // Micro_loop();
+  Micro_loop();
     delay(1);
   // Sound_loop();
     delay(1);
